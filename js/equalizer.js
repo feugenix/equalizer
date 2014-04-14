@@ -1,6 +1,6 @@
 var Equalizer = function(canvas) {
 
-    this._canvas = canvas && canvas.getContext ? canvas : document.querySelector('#canvas');
+    this._canvas = canvas && canvas.getContext ? canvas : null;
 
     if (!this._canvas)
         throw 'No canvas';
@@ -12,7 +12,6 @@ var Equalizer = function(canvas) {
     this._dataScale = 6;
 
 }
-
 
 Equalizer.prototype._prepareData = function(rawData) {
 

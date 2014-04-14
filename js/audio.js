@@ -47,7 +47,7 @@ AudioEqualizer.prototype.finishedLoading = function(bufferList) {
 
     }.bind(this);
 
-    //bufferSource.start(0);
+    bufferSource.start(0);
 
 }
 
