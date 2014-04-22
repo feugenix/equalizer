@@ -11,8 +11,8 @@ var AudioEqualizer = function(equalizer, sound) {
 
 AudioEqualizer.prototype.loadNStart = function() {
 
-    new BufferLoader(this._sound)
-        .load()
+    new BufferLoader()
+        .loadFromURLs(this._sound)
         .then(this.finishedLoading.bind(this))
         .catch(this.loadingError.bind(this));
 
@@ -31,7 +31,7 @@ AudioEqualizer.prototype.finishedLoading = function(bufferList) {
 
     bands = new Uint8Array(analyser.frequencyBinCount); // frequencyBinCount = fftSize / 2
 
-    bufferSource.buffer = bufferList[0][0];
+    bufferSource.buffer = bufferList[0];
 
     bufferSource.connect(analyser);
 

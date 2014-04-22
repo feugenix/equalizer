@@ -4,74 +4,100 @@
         return document.querySelector(selector);
     };
 
-    function createEqualizer(url) {
-        var canvas = get('#equalizer');
-        new AudioEqualizer(new Equalizer(canvas), url).loadNStart();
-    }
+    var MainLogic = function() {
 
-    function onWayChanged() {
+        if (!(this instanceof MainLogic))
+            return new MainLogic;
 
-        var url = get('#url'),
-        fs = get('#fs');
+        this
+            .findControls()
+            .listenControls();
 
-        switch(this.value) {
-        case 'sample':
-            url.classList.add('hidden');
-            fs.classList.add('hidden');
-            break;
-        case 'url':
-            url.classList.remove('hidden');
-            fs.classList.add('hidden');
-            break;
-        case 'fs':
-            url.classList.add('hidden');
-            fs.classList.remove('hidden');
-            break;
+    };
+
+    MainLogic.prototype = {
+
+        findControls: function() {
+
+            this._way = get('#way');
+            this._canvas = get('#equalizer');
+            this._url = get('#url');
+            this._fs = get('#fs');
+            this._play = get('#play');
+
+            return this;
+
+        },
+
+        listenControls: function() {
+
+            this._way.addEventListener('change', this.onWayChanged.bind(this), false);
+            this._play.addEventListener('click', this.onPlayClicked.bind(this), false);
+
+            return this;
+        },
+
+        createEqualizer: function(url) {
+            new AudioEqualizer(new Equalizer(this._canvas), url).loadNStart();
+        },
+
+        onWayChanged: function() {
+
+            switch(this._way.value) {
+
+                case 'sample':
+                    this._url.classList.add('hidden');
+                    this._fs.classList.add('hidden');
+                break;
+
+                case 'url':
+                    this._url.classList.remove('hidden');
+                    this._fs.classList.add('hidden');
+                break;
+
+                case 'fs':
+                    this._url.classList.add('hidden');
+                    this._fs.classList.remove('hidden');
+                break;
+
+            }
+
+        },
+
+        onPlayClicked: function() {
+
+            switch (this._way.value) {
+
+                case 'url':
+                    this.playSoundByURl(get('#url input').value);
+                break;
+
+                case 'fs':
+                    this.playSoundByFile(get('#fs input').files[0]);
+                break;
+
+                case 'sample':
+                    this.playSoundByURl('sounds/sound.wav');
+                break;
+
+                default:
+                    throw 'Not implemented';
+            }
+
+        },
+
+        playSoundByURl: function(url) {
+            this.createEqualizer(url);
+        },
+
+        playSoundByFile: function(file) {
+            if (!file) return;
+
+
         }
 
-    }
+    };
 
-    function onFSChanged(e) {
-
-    }
-
-    function onURLChanged() {
-        url = this.value;
-    }
-
-    function onPlayClicked() {
-        var way = get('#way').value;
-
-        switch (way) {
-        case 'url':
-            playSoundByURl(get('#url input').value);
-            break;
-
-        case 'sample':
-            playSoundByURl('sounds/sound.wav');
-            break;
-
-        default:
-            throw 'Not implemented';
-        }
-    }
-
-    function playSoundByURl(url) {
-        createEqualizer(url);
-    }
-
-    function listenWay() {
-        get('#way').addEventListener('change', onWayChanged, false);
-    }
-
-    function listenInputs() {
-        get('#fs input').addEventListener('change', onFSChanged, false);
-        get('#play').addEventListener('click', onPlayClicked, false);
-    }
-
-    window.addEventListener('load', function() {
-        listenWay();
-        listenInputs();
-    });
+    window.addEventListener('load', MainLogic);
 
 }();

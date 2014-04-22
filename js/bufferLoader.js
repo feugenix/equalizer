@@ -1,19 +1,46 @@
-function BufferLoader(urlList, callback) {
+function BufferLoader() {}
 
-    this.context = new webkitAudioContext;
-    this.bufferList = [];
-    this.loadCount = 0;
+BufferLoader.prototype.decode = function(blob) {
 
-    this.urlList = Array.isArray(urlList)
-        ? urlList
-        : [urlList];
+    var context = new webkitAudioContext,
+        deferred = vow.defer();
 
-}
+    context.decodeAudioData(
+        blob,
+        function(buffer) {
+            deferred.resolve(buffer);
+        },
+        function(reason) {
+            deferred.reject(reason);
+        }
+    );
 
-BufferLoader.prototype.loadBuffer = function(url, index) {
+    return deferred.promise();
 
-    // Load buffer asynchronously
-    var request = new XMLHttpRequest(),
+};
+
+BufferLoader.prototype.loadFromFS = function(file) {
+
+    var fileReader = new FileReader,
+        deferred = vow.defer();
+
+    fileReader.onload = function(e) {
+        deferred.resolve(e.target.result);
+    };
+
+    fileReader.onerror = function(e) {
+        deferred.reject(e);
+    };
+
+    fileReader.readAsArrayBuffer(file);
+
+    return deferred.promise();
+
+};
+
+BufferLoader.prototype.loadBufferFromURL = function(url) {
+
+    var request = new XMLHttpRequest,
         loader = this,
         deferred = vow.defer();
 
@@ -22,31 +49,26 @@ BufferLoader.prototype.loadBuffer = function(url, index) {
 
     request.onload = function() {
 
-        // Asynchronously decode the audio file data in request.response
-        loader.context.decodeAudioData(
-            request.response,
-            function(buffer) {
+        loader
+            .decode(request.response)
+            .then(function(buffer) {
 
                 if (!buffer) {
-                    deferred.reject('error decoding file data: ' + url);
+                    deferred.reject('Error decoding file data: ' + url);
                     return;
                 }
 
-                loader.bufferList[index] = buffer;
+                deferred.resolve(buffer);
 
-                if (++loader.loadCount == loader.urlList.length)
-                    deferred.resolve(loader.bufferList);
-
-            },
-            function(error) {
-                deferred.reject(error);
-            }
-        );
+            })
+            .catch(function(reason) {
+                deferred.reject(reason);
+            });
 
     };
 
     request.onerror = function() {
-        deferred.reject('BufferLoader: XHR error');
+        deferred.reject('BufferLoader: XHR error in file ' + url);
     }
 
     try {
@@ -59,14 +81,34 @@ BufferLoader.prototype.loadBuffer = function(url, index) {
 
 };
 
-BufferLoader.prototype.load = function() {
+BufferLoader.prototype.loadFromURLs = function(urlList) {
 
-    var loadingOps = [];
+    var deferred = vow.defer(),
+        bufferList = [],
+        loadCount = 0;
 
-    this.urlList.forEach(function(url, index) {
-        loadingOps.push(this.loadBuffer(url, index));
+    this.urlList = Array.isArray(urlList)
+        ? urlList
+        : [urlList];
+
+    this.urlList.forEach(function(url, index, urlList) {
+
+        this
+            .loadBufferFromURL(url)
+            .then(function(buffer) {
+
+                bufferList[index] = buffer;
+
+                if (++loadCount == urlList.length)
+                    deferred.resolve(bufferList);
+
+            })
+            .catch(function(reason) {
+                deferred.reject(reason);
+            })
+
     }, this);
 
-    return vow.all(loadingOps);
+    return deferred.promise();
 
 };
