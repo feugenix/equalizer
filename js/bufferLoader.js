@@ -25,8 +25,23 @@ BufferLoader.prototype.loadFromFS = function(file) {
         deferred = vow.defer();
 
     fileReader.onload = function(e) {
-        deferred.resolve(e.target.result);
-    };
+
+        this
+            .decode(e.target.result)
+            .then(function(buffer) {
+
+                if (!buffer) {
+                    deferred.reject('Error decoding file data: ' + file.name);
+                    return;
+                }
+
+                deferred.resolve(buffer);
+            })
+            .catch(function(reason) {
+                deferred.reject(reason);
+            });
+
+    }.bind(this);
 
     fileReader.onerror = function(e) {
         deferred.reject(e);
@@ -112,3 +127,13 @@ BufferLoader.prototype.loadFromURLs = function(urlList) {
     return deferred.promise();
 
 };
+
+BufferLoader.prototype.load = function(sound) {
+
+    if (sound instanceof File) {
+        return this.loadFromFS(sound);
+    } else if (sound instanceof Array || typeof sound === 'string') {
+        return this.loadFromURLs(sound);
+    }
+};
+

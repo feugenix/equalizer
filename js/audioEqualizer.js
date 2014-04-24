@@ -12,13 +12,13 @@ var AudioEqualizer = function(equalizer, sound) {
 AudioEqualizer.prototype.loadNStart = function() {
 
     new BufferLoader()
-        .loadFromURLs(this._sound)
+        .load(this._sound)
         .then(this.finishedLoading.bind(this))
         .catch(this.loadingError.bind(this));
 
 };
 
-AudioEqualizer.prototype.finishedLoading = function(bufferList) {
+AudioEqualizer.prototype.finishedLoading = function(buffer) {
 
     var context = new webkitAudioContext,
         bufferSource = context.createBufferSource(),
@@ -31,12 +31,11 @@ AudioEqualizer.prototype.finishedLoading = function(bufferList) {
 
     bands = new Uint8Array(analyser.frequencyBinCount); // frequencyBinCount = fftSize / 2
 
-    bufferSource.buffer = bufferList[0];
+    bufferSource.buffer = Array.isArray(buffer) ? buffer[0] : buffer;
 
     bufferSource.connect(analyser);
 
     analyser.connect(node);
-
     node.connect(context.destination);
     bufferSource.connect(context.destination);
 

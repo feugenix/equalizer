@@ -37,8 +37,8 @@
             return this;
         },
 
-        createEqualizer: function(url) {
-            new AudioEqualizer(new Equalizer(this._canvas), url).loadNStart();
+        createEqualizer: function(sound) {
+            new AudioEqualizer(new Equalizer(this._canvas), sound).loadNStart();
         },
 
         onWayChanged: function() {
@@ -92,8 +92,7 @@
 
         playSoundByFile: function(file) {
             if (!file) return;
-
-
+            this.createEqualizer(file);
         }
 
     };
